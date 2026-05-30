@@ -19,6 +19,8 @@ export const productApi = {
     }),
   
   delete: (id: number) => api.delete(ENDPOINTS.PRODUCT_DETAIL(id)),
-// inside productApi object
-getFiltered: (query: string) => api.get<PaginatedResponse<Product>>(`${ENDPOINTS.PRODUCTS}?${query}`),
+
+  getMyProducts: () => api.get<Product[]>('/my-products'),
+
+  getFiltered: (query: string) => api.get<PaginatedResponse<Product>>(`${ENDPOINTS.PRODUCTS}?${query}`),
 };

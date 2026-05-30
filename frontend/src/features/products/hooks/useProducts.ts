@@ -9,6 +9,8 @@ export interface ProductFilters {
   min_price?: string;
   max_price?: string;
   location?: string;
+  province_id?: string;
+  sort?: string;
   page?: number;
 }
 
@@ -42,6 +44,8 @@ export const useProducts = (filters: ProductFilters = {}) => {
       if (filters.min_price) params.append('min_price', filters.min_price);
       if (filters.max_price) params.append('max_price', filters.max_price);
       if (filters.location) params.append('location', filters.location);
+      if (filters.province_id) params.append('province_id', filters.province_id);
+      if (filters.sort) params.append('sort', filters.sort);
       if (page) params.append('page', String(page));
 
       const response = await productApi.getFiltered(params.toString());

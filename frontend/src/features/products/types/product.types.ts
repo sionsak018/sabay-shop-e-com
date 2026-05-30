@@ -24,13 +24,17 @@ export interface Product {
   title: string;
   description: string;
   price: number;
+  discount_price?: number;
   condition: 'new' | 'used';
   location: string;
-  status: 'active' | 'inactive';
+  status: 'active' | 'inactive' | 'sold';
   seller: User;
   category: Category;
   images: ProductImage[];
+  province?: { id: number; name: string };
+  commune?: { id: number; name: string };
   created_at: string;
+  is_favorited?: boolean;
 }
 export interface PaginatedResponse<T> {
   current_page: number;

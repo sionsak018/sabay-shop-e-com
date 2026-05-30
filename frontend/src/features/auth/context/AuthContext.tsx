@@ -1,7 +1,6 @@
-// src/features/auth/context/AuthContext.tsx
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { authApi } from '../services/authApi';
-import {type User,type RegisterData } from '../types/auth.types';  // ← add this import
+import { type User, type RegisterData } from '../types/auth.types';
 
 interface AuthContextType {
   user: User | null;
@@ -19,30 +18,28 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-  const token = localStorage.getItem('token');
-  console.log('Token found:', token);
-  if (token) {
-    authApi.getProfile()
-      .then(res => {
-        console.log('Profile loaded:', res.data);
-        setUser(res.data);
-      })
-      .catch(err => {
-        console.error('Profile error:', err);
-        localStorage.removeItem('token');
-        setUser(null);
-      })
-      .finally(() => setLoading(false));
-  } else {
-    setLoading(false);
-  }
-}, []);
+    const token = localStorage.getItem('token');
+    if (token) {
+      authApi.getProfile()
+        .then(res => {
+          setUser(res.data);
+        })
+        .catch(() => {
+          localStorage.removeItem('token');
+          setUser(null);
+        })
+        .finally(() => setLoading(false));
+    } else {
+      setLoading(false);
+    }
+  }, []);
 
   const login = async (email: string, password: string) => {
     const res = await authApi.login({ email, password });
     const { user, token } = res.data;
     localStorage.setItem('token', token);
     setUser(user);
+    return user;
   };
 
   const register = async (data: RegisterData) => {
@@ -50,12 +47,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const { user, token } = res.data;
     localStorage.setItem('token', token);
     setUser(user);
+    return user;
   };
 
   const logout = async () => {
-    await authApi.logout().catch(() => {});
-    localStorage.removeItem('token');
-    setUser(null);
+    try {
+      await authApi.logout();
+    } catch (error) {
+      console.error('Logout error:', error);
+    } finally {
+      localStorage.removeItem('token');
+      setUser(null);
+    }
   };
 
   const updateUser = (updatedUser: User) => {

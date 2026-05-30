@@ -44,7 +44,9 @@ class OrderController extends Controller
             $orders = [];
             foreach ($itemsBySeller as $sellerId => $items) {
                 $total = $items->sum(function ($item) {
-                    return $item->product->price * $item->quantity;
+                    $discount = $item->product->discount_price;
+                    $itemPrice = ($discount && $discount > 0) ? $discount : $item->product->price;
+                    return $itemPrice * $item->quantity;
                 });
 
                 $order = Order::create([
@@ -55,10 +57,12 @@ class OrderController extends Controller
                 ]);
 
                 foreach ($items as $cartItem) {
+                    $discount = $cartItem->product->discount_price;
+                    $itemPrice = ($discount && $discount > 0) ? $discount : $cartItem->product->price;
                     OrderItem::create([
                         'order_id'           => $order->id,
                         'product_id'         => $cartItem->product_id,
-                        'price_at_purchase'  => $cartItem->product->price,
+                        'price_at_purchase'  => $itemPrice,
                         'quantity'           => $cartItem->quantity,
                     ]);
                 }

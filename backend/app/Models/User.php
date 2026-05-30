@@ -2,37 +2,33 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
-use Database\Factories\UserFactory;
-use Illuminate\Database\Eloquent\Attributes\Fillable;
-use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 
-
-#[Fillable(['name', 'email', 'password'])]
-#[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
-    /** @use HasFactory<UserFactory> */
     use HasApiTokens, HasFactory, Notifiable;
+
     protected $fillable = [
         'name',
         'email',
         'password',
         'phone',
         'avatar',
-        'role'
+        'cover_photo',
+        'role',
+        'account_type',
+        'post_limit',
+        'about_me'
     ];
 
-    protected $hidden = ['password', 'remember_token'];
-    /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
+    protected $hidden = [
+        'password',
+        'remember_token',
+    ];
+
     protected function casts(): array
     {
         return [
@@ -40,12 +36,29 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+
     public function products()
     {
         return $this->hasMany(Product::class, 'seller_id');
     }
+
     public function cart()
     {
         return $this->hasOne(Cart::class);
+    }
+
+    public function favorites()
+    {
+        return $this->belongsToMany(Product::class, 'favorites');
+    }
+
+    public function followers()
+    {
+        return $this->belongsToMany(User::class, 'follows', 'following_id', 'follower_id');
+    }
+
+    public function following()
+    {
+        return $this->belongsToMany(User::class, 'follows', 'follower_id', 'following_id');
     }
 }
