@@ -1,97 +1,87 @@
-# ------------------------------
-# Laravel (backend) ignores
-# ------------------------------
+# Sabay Shop Consolidated .gitignore
+
+# -----------------------------------------------------------------------------
+# OS Files
+# -----------------------------------------------------------------------------
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# -----------------------------------------------------------------------------
+# IDE & Editor Files
+# -----------------------------------------------------------------------------
+.idea/
+.vscode/
+*.swp
+*.swo
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sublime-project
+*.sublime-workspace
+.zed/
+.fleet/
+
+# -----------------------------------------------------------------------------
+# Environment & Secrets (SECURITY CRITICAL)
+# -----------------------------------------------------------------------------
+.env
+.env.*
+!.env.example
+auth.json
+*.key
+
+# -----------------------------------------------------------------------------
+# Backend (Laravel) Specific
+# -----------------------------------------------------------------------------
 /backend/vendor/
 /backend/node_modules/
-/backend/.env
-/backend/.env.*
-!/backend/.env.example
-/backend/storage/*.key
-/backend/storage/framework/cache/
-/backend/storage/framework/sessions/
-/backend/storage/framework/testing/
-/backend/storage/framework/views/
-/backend/storage/logs/
 /backend/public/storage/
+/backend/public/hot/
+/backend/public/build/
+/backend/storage/framework/cache/data/*
+/backend/storage/framework/sessions/*
+/backend/storage/framework/testing/*
+/backend/storage/framework/views/*
+/backend/storage/logs/*
+/backend/storage/debugbar/
+/backend/storage/pail/
+/backend/phpunit.xml
 /backend/.phpunit.result.cache
-/backend/.idea/
-/backend/.vscode/
-/backend/*.sqlite
-/backend/*.sqlite-journal
+/backend/.phpunit.cache/
+/backend/.php-cs-fixer.cache
 /backend/Homestead.json
 /backend/Homestead.yaml
 /backend/.vagrant/
-/backend/.fleet/
-/backend/.php-cs-fixer.cache
-/backend/.phpunit.cache/
+/backend/*.sqlite
+/backend/*.sqlite-journal
 
-# ------------------------------
-# React (frontend) ignores
-# ------------------------------
+# -----------------------------------------------------------------------------
+# Frontend (React/Vite) Specific
+# -----------------------------------------------------------------------------
 /frontend/node_modules/
 /frontend/dist/
-/frontend/.env
-/frontend/.env.*
-!/frontend/.env.example
+/frontend/dist-ssr/
 /frontend/build/
 /frontend/.vite/
 /frontend/.cache/
 /frontend/coverage/
+/frontend/.nyc_output/
 /frontend/.eslintcache
 /frontend/*.log
-/frontend/.DS_Store
+/frontend/npm-debug.log*
+/frontend/yarn-debug.log*
+/frontend/yarn-error.log*
+/frontend/pnpm-debug.log*
 
-# ------------------------------
-# General / OS / IDE
-# ------------------------------
-.DS_Store
-Thumbs.db
+# -----------------------------------------------------------------------------
+# General
+# -----------------------------------------------------------------------------
 *.log
-*.tmp
-.env.backup
-*.swp
-.swo
-.idea/
-.vscode/
-.vscode/settings.json
-*.sublime-*
-/.phpunit.result.cache
-/.phpunit.cache
-/.fleet/
-/.zed/
-/composer.lock
-/package-lock.json
-/yarn.lock
-/.php-version
-/.tool-versions
-
-# ------------------------------
-# Testing & coverage
-# ------------------------------
-/backend/coverage/
-/backend/.coverage
-/backend/.phpunit.cache/
-/frontend/coverage/
-/frontend/.nyc_output/
-
-# ------------------------------
-# Docker / Laravel Sail
-# ------------------------------
-/backend/.docker/
-/backend/docker-compose.override.yml
-/backend/.sail/
-
-# ------------------------------
-# Laravel specific – compiled assets
-# ------------------------------
-/backend/public/css/
-/backend/public/js/
-/backend/public/mix-manifest.json
-/backend/public/hot
-/backend/storage/debugbar/
-
-# ------------------------------
-# Environment files (keep .example)
-# ------------------------------
-*.env
-!.env.example
+/node_modules/
+/vendor/
