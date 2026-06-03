@@ -16,6 +16,7 @@ export const AttributePage = () => {
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingAttr, setEditingAttr] = useState<any | null>(null);
+  const [saving, setSaving] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     type: 'text',
@@ -102,6 +103,8 @@ export const AttributePage = () => {
         return;
     }
 
+    setSaving(true);
+
     try {
       const submitData = new FormData();
       submitData.append('name', formData.name);
@@ -133,6 +136,8 @@ export const AttributePage = () => {
       fetchAttributes();
     } catch (error) {
       showAlert({ title: 'Error!', message: 'Failed to save field.', type: 'error' });
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -189,14 +194,13 @@ export const AttributePage = () => {
                 <td className="px-6 py-4">
                    <div className="flex flex-wrap gap-2">
                       {attr.options?.map((o: any, i: number) => (
-                        <div key={i} className="group relative">
-                            {o.image_url ? (
-                                <div className="size-8 rounded-full border border-gray-200 p-0.5 overflow-hidden bg-white shadow-sm" title={o.value}>
+                        <div key={i} className="flex items-center gap-1.5 bg-gray-50 border border-gray-100 px-2 py-1 rounded-full group">
+                            {o.image_url && (
+                                <div className="size-5 rounded-full overflow-hidden bg-white shadow-sm shrink-0">
                                     <img src={getImageUrl(o.image_url)} className="w-full h-full object-contain" alt={o.value} />
                                 </div>
-                            ) : (
-                                <span className="text-[10px] font-bold text-gray-500 bg-gray-50 border border-gray-200 px-2 py-0.5 rounded">{o.value}</span>
                             )}
+                            <span className="text-[10px] font-bold text-gray-600 whitespace-nowrap">{o.value}</span>
                         </div>
                       ))}
                       {!attr.options?.length && <span className="text-xs text-gray-300">-</span>}
@@ -314,9 +318,9 @@ export const AttributePage = () => {
               </form>
             </div>
             <div className="p-8 bg-gray-50 border-t flex gap-4 flex-shrink-0">
-              <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 px-6 py-3.5 bg-white border border-gray-200 text-gray-600 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-gray-100 transition-all">Cancel</button>
-              <button type="submit" form="attr-form" className="flex-1 px-6 py-3.5 bg-blue-600 text-white rounded-xl font-black text-xs uppercase tracking-widest shadow-xl shadow-blue-600/20 hover:bg-blue-700 transition-all active:scale-[0.98]">
-                {editingAttr ? 'Save Changes' : 'Create Field'}
+              <button type="button" onClick={() => setIsModalOpen(false)} disabled={saving} className="flex-1 px-6 py-3.5 bg-white border border-gray-200 text-gray-600 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-gray-100 transition-all disabled:opacity-50">Cancel</button>
+              <button type="submit" form="attr-form" disabled={saving} className="flex-1 px-6 py-3.5 bg-blue-600 text-white rounded-xl font-black text-xs uppercase tracking-widest shadow-xl shadow-blue-600/20 hover:bg-blue-700 transition-all active:scale-[0.98] disabled:opacity-50">
+                {saving ? 'Saving...' : editingAttr ? 'Save Changes' : 'Create Field'}
               </button>
             </div>
           </div>
