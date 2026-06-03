@@ -7,6 +7,8 @@ import api from '../../../services/api';
 import { MapPickerModal } from '../../../components/common/MapPickerModal';
 import { LocationPickerModal } from '../../../components/common/LocationPickerModal';
 import { MapView } from '../../../components/common/MapView';
+import { getImageUrl } from '../../../utils/imageUrl';
+import { useAlert } from '../../../context/AlertContext';
 
 // Toast UI Editor
 import '@toast-ui/editor/dist/toastui-editor.css';
@@ -14,6 +16,7 @@ import { Editor } from '@toast-ui/react-editor';
 
 export const CreateProductPage = () => {
   const navigate = useNavigate();
+  const { showAlert } = useAlert();
   const editorRef = useRef<any>(null);
 
   const [step, setStep] = useState(1); // 1: Category, 2: Information
@@ -40,8 +43,8 @@ export const CreateProductPage = () => {
     poster_email: '',
     condition: 'used',
     company_name: '',
-    lat: '11.5564',
-    lng: '104.9282',
+    lat: '',
+    lng: '',
   });
 
   const [attributeValues, setAttributeValues] = useState<Record<number, string>>({});
@@ -51,8 +54,10 @@ export const CreateProductPage = () => {
   const [previews, setPreviews] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const [isMapModalOpen, setIsMapModalOpen] = useState(false);
   const [isLocationModalOpen, setIsLocationModalOpen] = useState(false);
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [limitInfo, setLimitInfo] = useState<any>(null);
 
   useEffect(() => {
@@ -135,6 +140,7 @@ export const CreateProductPage = () => {
       setImages(prev => [...prev, ...selectedFiles]);
       const newPreviews = selectedFiles.map(file => URL.createObjectURL(file));
       setPreviews(prev => [...prev, ...newPreviews]);
+      if (errors.images) setErrors(prev => ({ ...prev, images: '' }));
     }
   };
 
@@ -154,6 +160,9 @@ export const CreateProductPage = () => {
     const newPhones = [...phones];
     newPhones[idx] = val;
     setPhones(newPhones);
+    if (idx === 0 && val.trim() && errors.phone) {
+        setErrors(prev => ({ ...prev, phone: '' }));
+    }
   };
 
   const removePhoneField = (idx: number) => {
@@ -164,18 +173,52 @@ export const CreateProductPage = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.category_id) return setError('Please select a category');
-    if (images.length === 0) return setError('Please upload at least one image');
-    if (!formData.province_id) return setError('Please select a province');
-    if (!formData.district_id) return setError('Please select a district');
+    const newErrors: Record<string, string> = {};
+    const Msg = 'ព័ត៌មាននេះត្រូវបានទាមទារ';
+
+    if (!formData.category_id) newErrors.category_id = Msg;
+    if (images.length === 0) newErrors.images = Msg;
+    if (!formData.title.trim()) newErrors.title = Msg;
+    if (!formData.price) newErrors.price = Msg;
+    if (!formData.province_id) newErrors.province_id = Msg;
+    if (!formData.district_id) newErrors.district_id = Msg;
+    if (!formData.poster_name.trim()) newErrors.poster_name = Msg;
+    if (!phones[0]?.trim()) newErrors.phone = Msg;
+
+    if (!formData.poster_email.trim()) {
+        newErrors.poster_email = Msg;
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.poster_email)) {
+        newErrors.poster_email = 'អាសយដ្ឋានអ៊ីមែលមិនត្រឹមត្រូវ';
+    }
+
+    if (!formData.company_name.trim()) newErrors.company_name = Msg;
+
+    if (!formData.address.trim()) newErrors.address = Msg;
+    if (!formData.lat || !formData.lng) newErrors.lat = Msg;
+    if (!agreedToTerms) newErrors.terms = Msg;
 
     const description = editorRef.current?.getInstance().getMarkdown();
     if (!description || description.trim().length < 5) {
-      return setError('Please provide a description');
+      newErrors.description = Msg;
+    }
+
+    // Validate dynamic attributes
+    dynamicAttributes.forEach(attr => {
+        if (attr.pivot.is_required && !attributeValues[attr.id]) {
+            newErrors[`attr_${attr.id}`] = Msg;
+        }
+    });
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      setError('សូមពិនិត្យមើលទិន្នន័យដែលខ្វះខាត');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
     }
 
     setLoading(true);
     setError(null);
+    setErrors({});
 
     const submitForm = new FormData();
     Object.entries(formData).forEach(([key, value]) => {
@@ -197,15 +240,28 @@ export const CreateProductPage = () => {
     submitForm.set('description', description);
     submitForm.append('attributes', JSON.stringify(attributeValues));
 
-    images.forEach((img) => {
-      submitForm.append('images[]', img);
-    });
+    // Fix: Explicitly append each image to 'images[]'
+    if (images.length > 0) {
+      images.forEach((img) => {
+        submitForm.append('images[]', img);
+      });
+    }
 
     try {
       await productApi.create(submitForm);
-      navigate('/', { replace: true });
+      showAlert({
+        title: 'ជោគជ័យ!',
+        message: 'ការផ្សព្វផ្សាយរបស់អ្នកត្រូវបានដាក់បញ្ជូនដោយជោគជ័យ។',
+        type: 'success',
+        onClose: () => navigate('/', { replace: true })
+      });
     } catch (err: any) {
       setError(err.response?.data?.message || 'Failed to post ad. Please try again.');
+      showAlert({
+        title: 'មានបញ្ហា!',
+        message: err.response?.data?.message || 'មិនអាចដាក់បញ្ជូនការផ្សព្វផ្សាយបានទេ សូមព្យាយាមម្តងទៀត។',
+        type: 'error'
+      });
     } finally {
       setLoading(false);
     }
@@ -284,15 +340,15 @@ export const CreateProductPage = () => {
             <h2 className="font-semibold text-lg mt-6 mb-4">Category</h2>
 
             {/* Split Category Selection */}
-            <div className="grid grid-cols-1 md:grid-cols-2 border border-gray-200 rounded-lg overflow-hidden h-[500px]">
+            <div className="grid grid-cols-1 md:grid-cols-2 border border-gray-200 rounded-lg overflow-hidden h-[500px] sm:h-[600px]">
 
               {/* Parent Categories */}
-              <div className="bg-white border-r border-gray-200 flex flex-col h-full">
-                <div className="px-4 py-3 bg-gray-50 border-b border-gray-200 flex items-center gap-2 text-xs font-bold text-gray-500 uppercase tracking-widest">
+              <div className="bg-white border-r border-gray-200 flex flex-col h-full overflow-hidden">
+                <div className="px-4 py-3 bg-gray-50 border-b border-gray-200 flex items-center gap-2 text-xs font-bold text-gray-500 uppercase tracking-widest shrink-0">
                   <span className="w-5 h-5 bg-gray-200 rounded-full flex items-center justify-center text-[10px] text-gray-600">1</span>
                   Choose a category
                 </div>
-                <div className="overflow-y-auto flex-1 custom-scrollbar">
+                <div className="overflow-y-auto flex-1 custom-scrollbar py-1 min-h-0">
                   <ul className="divide-y divide-gray-50">
                     {mainCategories.map((cat) => (
                       <li key={cat.id}>
@@ -303,7 +359,7 @@ export const CreateProductPage = () => {
                           className={`w-full group flex gap-4 items-center py-3 px-4 hover:bg-gray-50 transition-all text-left ${selectedMainCat?.id === cat.id ? 'bg-blue-50 text-blue-600' : 'text-gray-700'}`}
                         >
                           {cat.image_url ? (
-                            <img src={`http://127.0.0.1:8000/storage/${cat.image_url}`} className="w-10 h-10 object-contain" />
+                            <img src={getImageUrl(cat.image_url)} className="w-10 h-10 object-contain" />
                           ) : (
                             <div className="w-10 h-10 bg-gray-100 rounded flex items-center justify-center"><svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16m-7 6h7"/></svg></div>
                           )}
@@ -317,12 +373,12 @@ export const CreateProductPage = () => {
               </div>
 
               {/* Sub Categories */}
-              <div className="bg-white flex flex-col h-full">
-                <div className="px-4 py-3 bg-gray-50 border-b border-gray-200 flex items-center gap-2 text-xs font-bold text-gray-500 uppercase tracking-widest">
+              <div className="bg-white flex flex-col h-full overflow-hidden">
+                <div className="px-4 py-3 bg-gray-50 border-b border-gray-200 flex items-center gap-2 text-xs font-bold text-gray-500 uppercase tracking-widest shrink-0">
                   <span className="w-5 h-5 bg-gray-200 rounded-full flex items-center justify-center text-[10px] text-gray-600">2</span>
                   Select a subcategory
                 </div>
-                <div className="overflow-y-auto flex-1 custom-scrollbar">
+                <div className="overflow-y-auto flex-1 custom-scrollbar py-1 min-h-0">
                   {!selectedMainCat ? (
                     <div className="h-full flex flex-col items-center justify-center text-center p-10 space-y-4">
                         <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center">
@@ -340,7 +396,7 @@ export const CreateProductPage = () => {
                             className="w-full group flex gap-4 items-center py-3 px-6 hover:bg-blue-50 transition-all text-left"
                           >
                             {sub.image_url ? (
-                              <img src={`http://127.0.0.1:8000/storage/${sub.image_url}`} className="w-8 h-8 object-contain" />
+                              <img src={getImageUrl(sub.image_url)} className="w-8 h-8 object-contain" />
                             ) : (
                               <div className="w-8 h-8 bg-gray-100 rounded flex items-center justify-center"><svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16m-7 6h7"/></svg></div>
                             )}
@@ -359,7 +415,7 @@ export const CreateProductPage = () => {
         )}
 
         {step === 2 && (
-          <form onSubmit={handleSubmit} className="animate-in fade-in duration-500">
+          <form onSubmit={handleSubmit} noValidate className="animate-in fade-in duration-500">
 
             <div className="flex items-center justify-between mb-8">
                 <button type="button" onClick={() => setStep(1)} className="text-xs font-black text-blue-600 hover:underline flex items-center gap-1 uppercase tracking-widest">
@@ -390,13 +446,14 @@ export const CreateProductPage = () => {
                             </div>
                         ))}
                         {images.length < 10 && (
-                            <label className="aspect-square flex flex-col items-center justify-center border-2 border-dashed border-gray-200 rounded-xl cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition-all text-gray-400 hover:text-blue-600 bg-gray-50/50">
+                            <label className={`aspect-square flex flex-col items-center justify-center border-2 border-dashed rounded-xl cursor-pointer transition-all bg-gray-50/50 ${errors.images ? 'border-red-300 bg-red-50/30 text-red-400' : 'border-gray-200 text-gray-400 hover:border-blue-400 hover:bg-blue-50 hover:text-blue-600'}`}>
                                 <svg className="w-10 h-10 mb-2 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 4v16m8-8H4"/></svg>
                                 <span className="text-[10px] font-black uppercase tracking-widest">Add Photo</span>
                                 <input type="file" multiple accept="image/*" className="hidden" onChange={handleImageChange} />
                             </label>
                         )}
                     </div>
+                    {errors.images && <p className="text-red-500 text-[10px] font-bold mt-2 ml-1 animate-pulse">{errors.images}</p>}
                 </div>
 
                 {/* Specifications Section */}
@@ -429,30 +486,33 @@ export const CreateProductPage = () => {
                                 </label>
                                 {attr.type === 'select' ? (
                                     <select
-                                        required={!!attr.pivot.is_required}
-                                        value={attributeValues[attr.id] || ''}
-                                        onChange={e => setAttributeValues({ ...attributeValues, [attr.id]: e.target.value })}
-                                        className="w-full px-5 py-3.5 bg-white border border-gray-200 rounded-xl focus:border-blue-500 outline-none transition font-bold text-gray-800 shadow-sm"
-                                    >
-                                        <option value="">Select {attr.name}</option>
-                                        {attr.options?.map((o: any) => <option key={o.id} value={o.value}>{o.value}</option>)}
-                                    </select>
-                                ) : (
-                                    <input
-                                        type={attr.type === 'number' ? 'number' : 'text'}
-                                        required={!!attr.pivot.is_required}
-                                        value={attributeValues[attr.id] || ''}
-                                        autoComplete="off"
-                                        onChange={e => {
-                                            let val = e.target.value;
-                                            // Prevent negative numbers for fields like price/discount
-                                            if (attr.type === 'number' && Number(val) < 0) val = '';
-                                            setAttributeValues({ ...attributeValues, [attr.id]: val });
-                                        }}
-                                        className="w-full px-5 py-3.5 bg-white border border-gray-200 rounded-xl focus:border-blue-500 outline-none transition font-bold text-gray-800 shadow-sm"
-                                        placeholder={`Enter ${attr.name.toLowerCase()}`}
-                                    />
-                                )}
+                                    value={attributeValues[attr.id] || ''}
+                                    onChange={e => {
+                                        setAttributeValues({ ...attributeValues, [attr.id]: e.target.value });
+                                        if (errors[`attr_${attr.id}`]) setErrors(prev => ({ ...prev, [`attr_${attr.id}`]: '' }));
+                                    }}
+                                    className={`w-full px-5 py-3.5 bg-white border rounded-xl outline-none transition font-bold text-gray-800 shadow-sm ${errors[`attr_${attr.id}`] ? 'border-red-300' : 'border-gray-200 focus:border-blue-500'}`}
+                                >
+                                    <option value="">Select {attr.name}</option>
+                                    {attr.options?.map((o: any) => <option key={o.id} value={o.value}>{o.value}</option>)}
+                                </select>
+                            ) : (
+                                <input
+                                    type={attr.type === 'number' ? 'number' : 'text'}
+                                    value={attributeValues[attr.id] || ''}
+                                    autoComplete="off"
+                                    onChange={e => {
+                                        let val = e.target.value;
+                                        // Prevent negative numbers for fields like price/discount
+                                        if (attr.type === 'number' && Number(val) < 0) val = '';
+                                        setAttributeValues({ ...attributeValues, [attr.id]: val });
+                                        if (errors[`attr_${attr.id}`]) setErrors(prev => ({ ...prev, [`attr_${attr.id}`]: '' }));
+                                    }}
+                                    className={`w-full px-5 py-3.5 bg-white border rounded-xl outline-none transition font-bold text-gray-800 shadow-sm ${errors[`attr_${attr.id}`] ? 'border-red-300' : 'border-gray-200 focus:border-blue-500'}`}
+                                    placeholder={`Enter ${attr.name.toLowerCase()}`}
+                                />
+                            )}
+                            {errors[`attr_${attr.id}`] && <p className="text-red-500 text-[10px] font-bold mt-1.5 ml-1">{errors[`attr_${attr.id}`]}</p>}
                             </div>
                         ))}
                     </div>
@@ -467,20 +527,40 @@ export const CreateProductPage = () => {
                     <div className="space-y-8">
                         <div>
                             <label className="block text-[11px] font-black text-gray-400 uppercase mb-3 tracking-widest ml-1">Ad Title <span className="text-red-500">*</span></label>
-                            <input type="text" required placeholder="e.g. iPhone 15 Pro Max 256GB Gold" value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} className="w-full px-6 py-4 border border-gray-200 rounded-2xl focus:bg-white focus:border-blue-500 outline-none transition font-bold text-gray-800 shadow-sm" />
+                            <input
+                                type="text"
+                                placeholder="e.g. iPhone 15 Pro Max 256GB Gold"
+                                value={formData.title}
+                                onChange={e => {
+                                    setFormData({...formData, title: e.target.value});
+                                    if (errors.title) setErrors(prev => ({ ...prev, title: '' }));
+                                }}
+                                className={`w-full px-6 py-4 border rounded-2xl focus:bg-white outline-none transition font-bold text-gray-800 shadow-sm ${errors.title ? 'border-red-300' : 'border-gray-200 focus:border-blue-500'}`}
+                            />
+                            {errors.title && <p className="text-red-500 text-[10px] font-bold mt-2 ml-1">{errors.title}</p>}
                         </div>
 
                         <div>
                             <label className="block text-[11px] font-black text-gray-400 uppercase mb-3 tracking-widest ml-1">Price ($) <span className="text-red-500">*</span></label>
                             <div className="relative">
-                                <span className="absolute left-6 top-1/2 -translate-y-1/2 text-gray-400 font-black text-lg">$</span>
-                                <input type="number" required placeholder="0.00" value={formData.price} onChange={e => setFormData({...formData, price: e.target.value})} className="w-full pl-12 pr-6 py-4 border border-gray-200 rounded-2xl focus:bg-white focus:border-blue-500 outline-none transition font-black text-gray-800 text-lg shadow-sm" />
+                                <span className={`absolute left-6 top-1/2 -translate-y-1/2 font-black text-lg ${errors.price ? 'text-red-300' : 'text-gray-400'}`}>$</span>
+                                <input
+                                    type="number"
+                                                                        placeholder="0.00"
+                                    value={formData.price}
+                                    onChange={e => {
+                                        setFormData({...formData, price: e.target.value});
+                                        if (errors.price) setErrors(prev => ({ ...prev, price: '' }));
+                                    }}
+                                    className={`w-full pl-12 pr-6 py-4 border rounded-2xl focus:bg-white outline-none transition font-black text-gray-800 text-lg shadow-sm ${errors.price ? 'border-red-300' : 'border-gray-200 focus:border-blue-500'}`}
+                                />
                             </div>
+                            {errors.price && <p className="text-red-500 text-[10px] font-bold mt-2 ml-1">{errors.price}</p>}
                         </div>
 
                         <div>
                             <label className="block text-[11px] font-black text-gray-400 uppercase mb-3 tracking-widest ml-1">Description <span className="text-red-500">*</span></label>
-                            <div className="border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
+                            <div className={`border rounded-2xl overflow-hidden shadow-sm ${errors.description ? 'border-red-300' : 'border-gray-200'}`}>
                                 <Editor
                                     ref={editorRef}
                                     initialValue=""
@@ -498,6 +578,7 @@ export const CreateProductPage = () => {
                                     ]}
                                 />
                             </div>
+                            {errors.description && <p className="text-red-500 text-[10px] font-bold mt-2 ml-1">{errors.description}</p>}
                         </div>
                     </div>
                 </div>
@@ -515,11 +596,11 @@ export const CreateProductPage = () => {
                             <button
                                 type="button"
                                 onClick={() => setIsLocationModalOpen(true)}
-                                className="w-full flex items-center justify-between px-6 py-4 bg-white border border-gray-200 rounded-2xl hover:border-blue-500 transition-all text-left group shadow-sm"
+                                className={`w-full flex items-center justify-between px-6 py-4 bg-white border rounded-2xl transition-all text-left group shadow-sm ${errors.province_id || errors.district_id ? 'border-red-300' : 'border-gray-200 hover:border-blue-500'}`}
                             >
                                 {formData.province_id ? (
                                     <div className="flex flex-col">
-                                        <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest mb-0.5">Current Selection</span>
+                                        <span className={`text-[10px] font-black uppercase tracking-widest mb-0.5 ${errors.province_id || errors.district_id ? 'text-red-500' : 'text-blue-600'}`}>Current Selection</span>
                                         <span className="text-sm font-bold text-gray-800">
                                             {provinces.find(p => String(p.id) === formData.province_id)?.name}
                                             {formData.district_id && ` > ${districts.find(d => String(d.id) === formData.district_id)?.name}`}
@@ -530,8 +611,9 @@ export const CreateProductPage = () => {
                                 ) : (
                                     <span className="text-sm font-bold text-gray-400">Tap to choose province, district, commune...</span>
                                 )}
-                                <svg className="w-5 h-5 text-gray-300 group-hover:text-blue-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7"/></svg>
+                                <svg className={`w-5 h-5 transition-colors ${errors.province_id || errors.district_id ? 'text-red-300' : 'text-gray-300 group-hover:text-blue-500'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7"/></svg>
                             </button>
+                            {(errors.province_id || errors.district_id) && <p className="text-red-500 text-[10px] font-bold mt-2 ml-1">{errors.province_id || errors.district_id}</p>}
 
                             <LocationPickerModal
                                 isOpen={isLocationModalOpen}
@@ -544,21 +626,34 @@ export const CreateProductPage = () => {
                                         commune_id: data.commune_id,
                                         village_id: data.village_id
                                     });
+                                    if (errors.province_id || errors.district_id) {
+                                        setErrors(prev => ({ ...prev, province_id: '', district_id: '' }));
+                                    }
                                 }}
                             />
                         </div>
 
                         <div>
-                            <label className="block text-[11px] font-black text-gray-400 uppercase mb-3 tracking-widest ml-1">Detail Address</label>
-                            <input type="text" placeholder="House number, Street name, or Landmarks..." value={formData.address} onChange={e => setFormData({...formData, address: e.target.value})} className="w-full px-6 py-4 border border-gray-200 rounded-2xl focus:bg-white focus:border-blue-500 outline-none transition font-bold text-gray-800 shadow-sm" />
+                            <label className="block text-[11px] font-black text-gray-400 uppercase mb-3 tracking-widest ml-1">Detail Address <span className="text-red-500">*</span></label>
+                            <input
+                                type="text"
+                                placeholder="House number, Street name, or Landmarks..."
+                                value={formData.address}
+                                onChange={e => {
+                                    setFormData({...formData, address: e.target.value});
+                                    if (errors.address) setErrors(prev => ({ ...prev, address: '' }));
+                                }}
+                                className={`w-full px-6 py-4 border rounded-2xl focus:bg-white outline-none transition font-bold text-gray-800 shadow-sm ${errors.address ? 'border-red-300' : 'border-gray-200 focus:border-blue-500'}`}
+                            />
+                            {errors.address && <p className="text-red-500 text-[10px] font-bold mt-2 ml-1">{errors.address}</p>}
                         </div>
 
                         <div>
-                            <label className="block text-[11px] font-black text-gray-400 uppercase mb-3 tracking-widest ml-1">Location on Map</label>
+                            <label className="block text-[11px] font-black text-gray-400 uppercase mb-3 tracking-widest ml-1">Location on Map <span className="text-red-500">*</span></label>
                             <button
                                 type="button"
                                 onClick={() => setIsMapModalOpen(true)}
-                                className="w-full h-48 bg-gray-50 border border-gray-200 rounded-2xl overflow-hidden relative group hover:border-blue-400 transition-all shadow-sm"
+                                className={`w-full h-48 bg-gray-50 border rounded-2xl overflow-hidden relative group transition-all shadow-sm ${errors.lat ? 'border-red-300' : 'border-gray-200 hover:border-blue-400'}`}
                             >
                                 <div className="absolute inset-0 pointer-events-none opacity-50 group-hover:opacity-100 transition-opacity">
                                     <MapView lat={formData.lat} lng={formData.lng} />
@@ -572,12 +667,16 @@ export const CreateProductPage = () => {
                                     </span>
                                 </div>
                             </button>
+                            {errors.lat && <p className="text-red-500 text-[10px] font-bold mt-2 ml-1">{errors.lat}</p>}
                             <MapPickerModal
                                 isOpen={isMapModalOpen}
                                 onClose={() => setIsMapModalOpen(false)}
                                 lat={formData.lat}
                                 lng={formData.lng}
-                                onSelect={(lat, lng) => setFormData((prev: any) => ({ ...prev, lat, lng }))}
+                                onSelect={(lat, lng) => {
+                                    setFormData((prev: any) => ({ ...prev, lat, lng }));
+                                    if (errors.lat) setErrors(prev => ({ ...prev, lat: '' }));
+                                }}
                             />
                         </div>
                     </div>
@@ -593,17 +692,37 @@ export const CreateProductPage = () => {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                             <div>
                                 <label className="block text-[11px] font-black text-gray-400 uppercase mb-3 tracking-widest ml-1">Poster Name <span className="text-red-500">*</span></label>
-                                <input type="text" required placeholder="Enter your name" value={formData.poster_name} onChange={e => setFormData({...formData, poster_name: e.target.value})} className="w-full px-6 py-4 border border-gray-200 rounded-2xl focus:bg-white focus:border-blue-500 outline-none transition font-bold text-gray-800 shadow-sm" />
+                                <input
+                                    type="text"
+                                                                        placeholder="Enter your name"
+                                    value={formData.poster_name}
+                                    onChange={e => {
+                                        setFormData({...formData, poster_name: e.target.value});
+                                        if (errors.poster_name) setErrors(prev => ({ ...prev, poster_name: '' }));
+                                    }}
+                                    className={`w-full px-6 py-4 border rounded-2xl focus:bg-white outline-none transition font-bold text-gray-800 shadow-sm ${errors.poster_name ? 'border-red-300' : 'border-gray-200 focus:border-blue-500'}`}
+                                />
+                                {errors.poster_name && <p className="text-red-500 text-[10px] font-bold mt-2 ml-1">{errors.poster_name}</p>}
                             </div>
                             <div>
-                                <label className="block text-[11px] font-black text-gray-400 uppercase mb-3 tracking-widest ml-1">Email Address</label>
-                                <input type="email" placeholder="email@example.com" value={formData.poster_email} onChange={e => setFormData({...formData, poster_email: e.target.value})} className="w-full px-6 py-4 border border-gray-200 rounded-2xl focus:bg-white focus:border-blue-500 outline-none transition font-bold text-gray-800 shadow-sm" />
+                                <label className="block text-[11px] font-black text-gray-400 uppercase mb-3 tracking-widest ml-1">Email Address <span className="text-red-500">*</span></label>
+                                <input
+                                    type="email"
+                                    placeholder="email@example.com"
+                                    value={formData.poster_email}
+                                    onChange={e => {
+                                        setFormData({...formData, poster_email: e.target.value});
+                                        if (errors.poster_email) setErrors(prev => ({ ...prev, poster_email: '' }));
+                                    }}
+                                    className={`w-full px-6 py-4 border rounded-2xl focus:bg-white outline-none transition font-bold text-gray-800 shadow-sm ${errors.poster_email ? 'border-red-300' : 'border-gray-200 focus:border-blue-500'}`}
+                                />
+                                {errors.poster_email && <p className="text-red-500 text-[10px] font-bold mt-2 ml-1">{errors.poster_email}</p>}
                             </div>
                         </div>
 
                         <div>
                             <div className="flex items-center justify-between mb-3 ml-1">
-                                <label className="block text-[11px] font-black text-gray-400 uppercase tracking-widest">Phone Numbers (Max 3)</label>
+                                <label className="block text-[11px] font-black text-gray-400 uppercase tracking-widest">Phone Numbers (Max 3) <span className="text-red-500">*</span></label>
                                 {phones.length < 3 && (
                                     <button type="button" onClick={addPhone} className="text-[10px] font-black text-blue-600 hover:text-blue-700 uppercase tracking-widest flex items-center gap-1">
                                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M12 4v16m8-8H4"/></svg>
@@ -616,10 +735,10 @@ export const CreateProductPage = () => {
                                     <div key={idx} className="flex gap-2">
                                         <div className="relative flex-grow">
                                             <div className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center gap-2 border-r border-gray-200 pr-3">
-                                                <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
-                                                <span className="text-[10px] font-black text-gray-400">{idx + 1}</span>
+                                                <svg className={`w-4 h-4 ${idx === 0 && errors.phone ? 'text-red-400' : 'text-gray-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
+                                                <span className={`text-[10px] font-black ${idx === 0 && errors.phone ? 'text-red-400' : 'text-gray-400'}`}>{idx + 1}</span>
                                             </div>
-                                            <input type="tel" required={idx === 0} placeholder="012 345 678" value={phone} onChange={e => handlePhoneValueChange(idx, e.target.value)} className="w-full pl-16 pr-4 py-4 border border-gray-200 rounded-2xl focus:bg-white focus:border-blue-500 outline-none transition font-bold text-gray-800 shadow-sm" />
+                                            <input type="tel" placeholder="012 345 678" value={phone} onChange={e => handlePhoneValueChange(idx, e.target.value)} className={`w-full pl-16 pr-4 py-4 border rounded-2xl focus:bg-white outline-none transition font-bold text-gray-800 shadow-sm ${idx === 0 && errors.phone ? 'border-red-300' : 'border-gray-200 focus:border-blue-500'}`} />
                                         </div>
                                         {phones.length > 1 && (
                                             <button type="button" onClick={() => removePhoneField(idx)} className="p-4 text-gray-400 hover:text-red-500 transition-colors">
@@ -629,11 +748,22 @@ export const CreateProductPage = () => {
                                     </div>
                                 ))}
                             </div>
+                            {errors.phone && <p className="text-red-500 text-[10px] font-bold mt-2 ml-1">{errors.phone}</p>}
                         </div>
 
                         <div>
-                            <label className="block text-[11px] font-black text-gray-400 uppercase mb-3 tracking-widest ml-1">Business/Company Name (Optional)</label>
-                            <input type="text" placeholder="Enter company name if applicable" value={formData.company_name} onChange={e => setFormData({...formData, company_name: e.target.value})} className="w-full px-6 py-4 border border-gray-200 rounded-2xl focus:bg-white focus:border-blue-500 outline-none transition font-bold text-gray-800 shadow-sm" />
+                            <label className="block text-[11px] font-black text-gray-400 uppercase mb-3 tracking-widest ml-1">Business/Company Name <span className="text-red-500">*</span></label>
+                            <input
+                                type="text"
+                                placeholder="Enter company name if applicable"
+                                value={formData.company_name}
+                                onChange={e => {
+                                    setFormData({...formData, company_name: e.target.value});
+                                    if (errors.company_name) setErrors(prev => ({ ...prev, company_name: '' }));
+                                }}
+                                className={`w-full px-6 py-4 border rounded-2xl focus:bg-white outline-none transition font-bold text-gray-800 shadow-sm ${errors.company_name ? 'border-red-300' : 'border-gray-200 focus:border-blue-500'}`}
+                            />
+                            {errors.company_name && <p className="text-red-500 text-[10px] font-bold mt-2 ml-1">{errors.company_name}</p>}
                         </div>
                     </div>
                 </div>
@@ -641,11 +771,22 @@ export const CreateProductPage = () => {
             </div>
 
             <div className="flex flex-col sm:flex-row items-center justify-between gap-8 pt-12 mt-12 border-t border-gray-100">
-              <div className="flex items-start gap-3 max-w-md">
-                 <input type="checkbox" required className="mt-1 w-4 h-4 rounded text-blue-600 focus:ring-blue-500" />
-                 <p className="text-[11px] text-gray-500 leading-relaxed font-bold uppercase tracking-tight">
-                   I agree to the <span className="text-blue-600 hover:underline cursor-pointer">Terms and Conditions</span> and <span className="text-blue-600 hover:underline cursor-pointer">Safety Guidelines</span> of Sabay Shop.
-                 </p>
+              <div className="flex flex-col gap-2 max-w-md">
+                <div className="flex items-start gap-3">
+                    <input
+                        type="checkbox"
+                        checked={agreedToTerms}
+                        onChange={e => {
+                            setAgreedToTerms(e.target.checked);
+                            if (errors.terms) setErrors(prev => ({ ...prev, terms: '' }));
+                        }}
+                        className={`mt-1 w-4 h-4 rounded text-blue-600 focus:ring-blue-500 ${errors.terms ? 'border-red-300' : 'border-gray-300'}`}
+                    />
+                    <p className={`text-[11px] leading-relaxed font-bold uppercase tracking-tight ${errors.terms ? 'text-red-500' : 'text-gray-500'}`}>
+                    I agree to the <span className="text-blue-600 hover:underline cursor-pointer">Terms and Conditions</span> and <span className="text-blue-600 hover:underline cursor-pointer">Safety Guidelines</span> of Sabay Shop.
+                    </p>
+                </div>
+                {errors.terms && <p className="text-red-500 text-[10px] font-bold ml-7">{errors.terms}</p>}
               </div>
               <button
                 type="submit"

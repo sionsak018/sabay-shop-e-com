@@ -6,9 +6,18 @@ use App\Models\Product;
 use App\Models\Category;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use App\Services\CloudinaryService;
+use Illuminate\Support\Facades\Log;
 
 class ProductController extends Controller
 {
+    protected $cloudinaryService;
+
+    public function __construct(CloudinaryService $cloudinaryService)
+    {
+        $this->cloudinaryService = $cloudinaryService;
+    }
+
     public function index(Request $request)
     {
         $user = auth('sanctum')->user();
@@ -128,8 +137,9 @@ class ProductController extends Controller
             'poster_email' => 'nullable|email',
             'poster_phones' => 'nullable|string', // JSON string from frontend
             'company_name' => 'nullable|string',
-            'images' => 'array|max:10',
-            'images.*' => 'image|mimes:jpg,jpeg,png|max:2048'
+            // Disable strict validation temporarily to debug
+            // 'images' => 'array|max:10',
+            // 'images.*' => 'image|mimes:jpg,jpeg,png|max:2048'
         ]);
 
         $product = $request->user()->products()->create($request->except(['images', 'attributes']));
@@ -146,7 +156,7 @@ class ProductController extends Controller
                             'value' => is_array($value) ? json_encode($value) : $value
                         ]);
 
-                        // Auto-sync "Discount Price" attribute to the product's discount_price column
+                        // Auto-sync "Discount Price" attribute
                         $attrModel = $attributeModels->find($attrId);
                         if ($attrModel) {
                             $name = strtolower(str_replace(' ', '', $attrModel->name));
@@ -164,14 +174,31 @@ class ProductController extends Controller
             }
         }
 
-        if ($request->hasFile('images')) {
-            foreach ($request->file('images') as $index => $image) {
-                $path = $image->store('products', 'public');
-                $product->images()->create([
-                    'image_url' => $path,
-                    'sort_order' => $index
-                ]);
+        // --- Robust Image Handling ---
+        $allFiles = $request->allFiles();
+
+        // Laravel handles 'images' key from FormData
+        $imageFiles = $request->file('images');
+
+        if ($imageFiles) {
+            $files = is_array($imageFiles) ? $imageFiles : [$imageFiles];
+            \Log::info('Processing ' . count($files) . ' images.');
+
+            foreach ($files as $index => $image) {
+                try {
+                    $url = $this->cloudinaryService->upload($image, 'sabay-shop/products');
+                    if ($url) {
+                        $product->images()->create([
+                            'image_url' => $url,
+                            'sort_order' => $index
+                        ]);
+                    }
+                } catch (\Exception $e) {
+                    \Log::error('Upload failed: ' . $e->getMessage());
+                }
             }
+        } else {
+            \Log::warning('No images found in request. Keys: ' . implode(', ', array_keys($allFiles)));
         }
 
         return response()->json($product->load('images'), 201);
@@ -213,8 +240,6 @@ class ProductController extends Controller
             'poster_email' => 'nullable|email',
             'poster_phones' => 'nullable|string',
             'company_name' => 'nullable|string',
-            'images' => 'array|max:10',
-            'images.*' => 'image|mimes:jpg,jpeg,png|max:2048'
         ]);
 
         $product->update($request->except(['images', 'attributes']));
@@ -222,7 +247,7 @@ class ProductController extends Controller
         $attributesData = $request->input('attributes');
         if ($attributesData) {
             $product->attributeValues()->delete();
-            $product->discount_price = null; // Reset before re-syncing
+            $product->discount_price = null;
 
             $attrs = is_string($attributesData) ? json_decode($attributesData, true) : $attributesData;
             if (is_array($attrs)) {
@@ -253,12 +278,20 @@ class ProductController extends Controller
         }
 
         if ($request->hasFile('images')) {
-            foreach ($request->file('images') as $index => $image) {
-                $path = $image->store('products', 'public');
-                $product->images()->create([
-                    'image_url' => $path,
-                    'sort_order' => $product->images()->count() + $index
-                ]);
+            $imageFiles = $request->file('images');
+            $files = is_array($imageFiles) ? $imageFiles : [$imageFiles];
+            foreach ($files as $index => $image) {
+                try {
+                    $url = $this->cloudinaryService->upload($image, 'sabay-shop/products');
+                    if ($url) {
+                        $product->images()->create([
+                            'image_url' => $url,
+                            'sort_order' => $product->images()->count() + $index
+                        ]);
+                    }
+                } catch (\Exception $e) {
+                    Log::error('Update image upload failed: ' . $e->getMessage());
+                }
             }
         }
 

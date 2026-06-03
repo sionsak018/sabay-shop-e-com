@@ -56,6 +56,11 @@ const menuItems: MenuItem[] = [
     ]
   },
   {
+    path: '/admin/sliders',
+    label: 'Home Sliders',
+    icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+  },
+  {
     path: '/admin/config',
     label: 'Settings',
     icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
@@ -67,6 +72,7 @@ export const AdminLayout = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [expandedMenus, setExpandedMenus] = useState<string[]>(['Categories', 'Custom Fields', 'Locations', 'User Access']);
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   const toggleMenu = (label: string) => {
     setExpandedMenus(prev =>
@@ -85,15 +91,32 @@ export const AdminLayout = () => {
 
   return (
     <div className="flex min-h-screen bg-gray-100 antialiased">
+      {/* Sidebar Overlay for Mobile */}
+      {isMobileSidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 lg:hidden animate-in fade-in duration-200"
+          onClick={() => setIsMobileSidebarOpen(false)}
+        />
+      )}
+
       {/* Sidebar */}
-      <aside className="w-64 bg-white border-r border-gray-200 hidden lg:flex flex-col">
-        <div className="h-14 flex items-center px-5 border-b border-gray-100">
+      <aside className={`
+        fixed inset-y-0 left-0 w-64 bg-white border-r border-gray-200 z-50 transform transition-transform duration-300 lg:relative lg:translate-x-0 flex flex-col
+        ${isMobileSidebarOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full'}
+      `}>
+        <div className="h-14 flex items-center justify-between px-5 border-b border-gray-100">
           <Link to="/" className="flex items-center gap-2 group">
-            <div className="bg-blue-600 text-white font-black px-1.5 py-0.5 rounded text-base italic group-hover:bg-blue-700 transition">
+            <div className="bg-blue-600 text-white font-black px-1.5 py-0.5 rounded text-base italic group-hover:bg-blue-700 transition leading-tight">
               SABAY
             </div>
-            <span className="text-base font-bold text-gray-800 tracking-tight uppercase">Market Admin</span>
+            <span className="text-base font-bold text-gray-800 tracking-tight uppercase">Admin</span>
           </Link>
+          <button
+            onClick={() => setIsMobileSidebarOpen(false)}
+            className="p-1 text-gray-400 hover:text-red-500 lg:hidden"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
+          </button>
         </div>
 
         <nav className="flex-1 overflow-y-auto p-3 space-y-0.5 custom-scrollbar">
@@ -107,6 +130,7 @@ export const AdminLayout = () => {
                 {item.path ? (
                   <Link
                     to={item.path}
+                    onClick={() => setIsMobileSidebarOpen(false)}
                     className={`flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-xs font-bold transition-all ${
                       location.pathname === item.path
                         ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20'
@@ -138,6 +162,7 @@ export const AdminLayout = () => {
                           <Link
                             key={child.path}
                             to={child.path}
+                            onClick={() => setIsMobileSidebarOpen(false)}
                             className={`block px-3 py-1.5 rounded-md text-[12px] font-bold transition-colors ${
                               location.pathname === child.path
                                 ? 'text-blue-600 bg-blue-50'
@@ -158,7 +183,7 @@ export const AdminLayout = () => {
 
         <div className="p-3 border-t border-gray-100 bg-gray-50/30">
           <div className="flex items-center gap-2.5 px-3 py-2.5">
-            <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white font-black text-xs shadow-sm">
+            <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white font-black text-xs shadow-sm border-2 border-white">
               {user.name.charAt(0).toUpperCase()}
             </div>
             <div className="flex-1 min-w-0">
@@ -177,20 +202,35 @@ export const AdminLayout = () => {
       </aside>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        {/* Mobile Header */}
-        <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-4 lg:hidden">
-          <Link to="/" className="flex items-center gap-2">
-            <div className="bg-blue-600 text-white font-black px-2 py-1 rounded text-lg italic">SABAY</div>
-          </Link>
-          <button className="p-2 text-gray-400">
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16m-7 6h7"/></svg>
-          </button>
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden relative bg-[#f8fafc]">
+        {/* Mobile Header - Improved for iPhone 14 Pro Max & larger screens */}
+        <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-4 lg:hidden sticky top-0 z-40">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setIsMobileSidebarOpen(true)}
+              className="p-2.5 -ml-2 text-blue-600 bg-blue-50 rounded-lg active:scale-95 transition-all shadow-sm flex items-center justify-center"
+              aria-label="Open Menu"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16m-7 6h7"/>
+              </svg>
+            </button>
+            <Link to="/" className="flex items-center gap-2">
+              <div className="bg-blue-600 text-white font-black px-2 py-0.5 rounded text-lg italic leading-tight shadow-sm">SABAY</div>
+              <span className="text-sm font-black text-gray-800 uppercase tracking-tighter hidden xs:block">Admin</span>
+            </Link>
+          </div>
+
+          <div className="flex items-center gap-3">
+             <Link to="/profile" className="w-9 h-9 rounded-full bg-blue-600 flex items-center justify-center text-white font-black text-xs border-2 border-white shadow-md ring-1 ring-blue-100">
+                {user.name.charAt(0).toUpperCase()}
+             </Link>
+          </div>
         </header>
 
         {/* Content Area */}
-        <main className="flex-1 overflow-y-auto p-4 md:p-6 bg-[#f8fafc]">
-          <div className="max-w-5xl mx-auto">
+        <main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-10 custom-scrollbar">
+          <div className="max-w-7xl mx-auto">
             <Outlet />
           </div>
         </main>

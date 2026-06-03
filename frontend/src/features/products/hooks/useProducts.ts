@@ -10,6 +10,7 @@ export interface ProductFilters {
   max_price?: string;
   location?: string;
   province_id?: string;
+  district_id?: string;
   sort?: string;
   page?: number;
 }
@@ -29,7 +30,7 @@ export const useProducts = (filters: ProductFilters = {}) => {
   const filtersKey = useMemo(() => {
     const { page, ...rest } = filters;
     return JSON.stringify(rest);
-  }, [filters.keyword, filters.category_id, filters.min_price, filters.max_price, filters.location]);
+  }, [JSON.stringify(filters)]); // Use stringified filters as dependency for stability
 
   // Separate page from the rest – changing page should also trigger fetch
   const page = filters.page || 1;
@@ -45,8 +46,16 @@ export const useProducts = (filters: ProductFilters = {}) => {
       if (filters.max_price) params.append('max_price', filters.max_price);
       if (filters.location) params.append('location', filters.location);
       if (filters.province_id) params.append('province_id', filters.province_id);
+      if (filters.district_id) params.append('district_id', filters.district_id);
       if (filters.sort) params.append('sort', filters.sort);
       if (page) params.append('page', String(page));
+
+      // Append dynamic attributes (attr_*)
+      Object.entries(filters).forEach(([key, value]) => {
+          if (key.startsWith('attr_') && value) {
+              params.append(key, String(value));
+          }
+      });
 
       const response = await productApi.getFiltered(params.toString());
       setProducts(response.data.data);

@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import api from '../../../services/api';
 import { AdminPagination } from '../components/AdminPagination';
+import { useAlert } from '../../../context/AlertContext';
 
 export const ProductPage = () => {
+  const { showAlert } = useAlert();
   const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [pagination, setPagination] = useState({ currentPage: 1, lastPage: 1, total: 0 });
@@ -41,21 +43,28 @@ export const ProductPage = () => {
   const handleUpdateStatus = async (id: number, status: string) => {
     try {
       await api.put(`/admin/products/${id}`, { status });
+      showAlert({ title: 'Updated!', message: 'Product status changed.', type: 'success' });
       fetchData(pagination.currentPage, searchTerm);
     } catch (error) {
-      alert('Failed to update product');
+      showAlert({ title: 'Error!', message: 'Failed to update status.', type: 'error' });
     }
   };
 
-  const handleDelete = async (id: number) => {
-    if (window.confirm('Delete this product?')) {
-      try {
-        await api.delete(`/admin/products/${id}`);
-        fetchData(pagination.currentPage, searchTerm);
-      } catch (error) {
-        alert('Failed to delete product');
+  const handleDelete = (id: number) => {
+    showAlert({
+      title: 'Are you sure?',
+      message: 'Delete this product?',
+      type: 'confirm',
+      onConfirm: async () => {
+        try {
+          await api.delete(`/admin/products/${id}`);
+          showAlert({ title: 'Deleted!', message: 'Product has been removed.', type: 'success' });
+          fetchData(pagination.currentPage, searchTerm);
+        } catch (error) {
+          showAlert({ title: 'Error!', message: 'Failed to delete product.', type: 'error' });
+        }
       }
-    }
+    });
   };
 
   return (
