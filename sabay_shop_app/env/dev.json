@@ -1,0 +1,5 @@
+{
+  "BASE_URL": "http://10.0.2.2:8000/api",
+  "APP_ID": "sabay_shop_app_dev",
+  "SECRET_KEY": "dev_secret_key"
+}
