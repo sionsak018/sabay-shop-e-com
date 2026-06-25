@@ -128,15 +128,32 @@ flutter run
 
 ---
 
-## Cloudinary Configuration
+## Image Storage (Cloudinary vs Local)
 
-This project uses **Cloudinary** for image storage. To enable image uploads, add your Cloudinary credentials to `backend/.env`:
+The project automatically switches between storage methods based on your environment:
 
-```env
-CLOUDINARY_CLOUD_NAME=your_cloud_name
-CLOUDINARY_API_KEY=your_api_key
-CLOUDINARY_API_SECRET=your_api_secret
-```
+### 1. Local Storage (Development / Localhost)
+Whenever `APP_ENV` is set to `local` in your `.env` (default), the application will **always** use local storage, even if Cloudinary credentials are present.
+
+1.  Configure `APP_URL` in `backend/.env` to your server's address (e.g., `http://localhost:8000`).
+2.  Run the symbolic link command:
+    ```bash
+    cd backend
+    php artisan storage:link
+    ```
+3.  Images will be stored in `backend/storage/app/public`.
+
+### 2. Cloudinary (Production / Hosting)
+To use Cloudinary on your hosting server:
+1.  Set `APP_ENV=production` in your `.env`.
+2.  Provide your Cloudinary credentials:
+    ```env
+    CLOUDINARY_CLOUD_NAME=your_cloud_name
+    CLOUDINARY_API_KEY=your_api_key
+    CLOUDINARY_API_SECRET=your_api_secret
+    ```
+
+---
 
 ## API Documentation
 
