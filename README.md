@@ -22,6 +22,34 @@ Before you begin, ensure you have the following installed:
 
 ---
 
+## Running the Project
+
+Once setup is complete, you can run all components simultaneously:
+
+### 1. Start the Backend (API & Queue)
+```bash
+cd backend
+composer run dev
+```
+- **API URL**: `http://localhost:8000/api`
+- **Queue**: Running in background (via `concurrently`)
+
+### 2. Start the Admin Dashboard (Web)
+```bash
+cd frontend
+npm run dev
+```
+- **URL**: `http://localhost:5173`
+
+### 3. Start the Mobile App
+```bash
+cd sabay_shop_app
+flutter run
+```
+*Tip: For physical devices, ensure they are on the same Wi-Fi network as your backend and update the API base URL if necessary.*
+
+---
+
 ## 1. Backend Setup (Laravel)
 
 1.  Navigate to the backend directory:
