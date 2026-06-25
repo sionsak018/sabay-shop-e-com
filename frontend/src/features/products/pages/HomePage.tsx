@@ -40,9 +40,19 @@ export const HomePage = () => {
   const [expandedAttrs, setExpandedAttrs] = useState<Record<number, boolean>>({});
 
   useEffect(() => {
-    setLoadingCategories(true);
+    // Optimization: Check if we already have categories in session storage to show them instantly
+    const cachedCats = sessionStorage.getItem('cached_categories');
+    if (cachedCats) {
+        setCategories(JSON.parse(cachedCats));
+        setLoadingCategories(false);
+    }
+
     categoryApi.getAll()
-      .then(res => setCategories(Array.isArray(res.data) ? res.data : res.data.data || []))
+      .then(res => {
+          const data = Array.isArray(res.data) ? res.data : res.data.data || [];
+          setCategories(data);
+          sessionStorage.setItem('cached_categories', JSON.stringify(data));
+      })
       .finally(() => setLoadingCategories(false));
   }, []);
 
