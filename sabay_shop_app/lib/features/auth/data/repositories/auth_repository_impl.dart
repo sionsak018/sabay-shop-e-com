@@ -65,10 +65,17 @@ class AuthRepositoryImpl extends BaseRepository implements AuthRepository {
   Future<UserEntity?> getProfile() async {
     return mapException(() async {
       try {
+        final token = await storageService.getToken();
+        if (token == null) return null;
+        
         final response = await dio.get('/profile');
         return UserModel.fromJson(response.data);
       } catch (e) {
-        return null;
+        if (e is DioException && e.response?.statusCode == 401) {
+          await storageService.deleteToken();
+          return null;
+        }
+        rethrow;
       }
     });
   }

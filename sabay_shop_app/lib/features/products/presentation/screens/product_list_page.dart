@@ -292,11 +292,11 @@ class _ProductListPageState extends ConsumerState<ProductListPage> {
                             ),
                             onFavoriteTap: () {
                               final authState = ref.read(authControllerProvider);
-                              if (authState.value == null && !authState.isLoading) {
-                                context.push(RouteName.login);
-                              } else {
+                              if (authState.value != null) {
                                 ref.read(productsProvider.notifier)
                                     .toggleFavorite(products[index].id, currentStatus: products[index].isFavorited);
+                              } else if (!authState.isLoading) {
+                                context.push(RouteName.login);
                               }
                             },
                           );
@@ -888,14 +888,14 @@ class _ProductListPageState extends ConsumerState<ProductListPage> {
                         ),
                         GestureDetector(
                           onTap: () {
-                            final authState = ref.read(authControllerProvider);
-                            if (authState.value == null && !authState.isLoading) {
-                              context.push(RouteName.login);
-                            } else {
-                              ref.read(provider.notifier)
-                                  .toggleFavorite(product.id, currentStatus: product.isFavorited);
-                            }
-                          },
+                          final authState = ref.read(authControllerProvider);
+                          if (authState.value != null) {
+                            ref.read(provider.notifier)
+                                .toggleFavorite(product.id, currentStatus: product.isFavorited);
+                          } else if (!authState.isLoading) {
+                            context.push(RouteName.login);
+                          }
+                        },
                           child: Icon(
                             product.isFavorited ? Icons.favorite : Icons.favorite_border,
                             color: product.isFavorited ? Colors.red : Colors.grey,

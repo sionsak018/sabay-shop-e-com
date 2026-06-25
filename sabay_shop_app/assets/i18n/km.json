@@ -1,3 +1,67 @@
 {
-  "app_name": "សប្បាយសប"
+  "app_name": "សប្បាយសប",
+  "common": {
+    "home": "ទំព័រដើម",
+    "marketplace": "ទីផ្សារ",
+    "sell": "លក់",
+    "messages": "សារ",
+    "profile": "គណនី",
+    "login": "ចូលគណនី",
+    "register": "ចុះឈ្មោះ",
+    "logout": "ចាកចេញ",
+    "cancel": "បោះបង់",
+    "save": "រក្សាទុក",
+    "edit": "កែសម្រួល",
+    "delete": "លុប",
+    "search": "ស្វែងរក",
+    "loading": "កំពុងផ្ទុក...",
+    "error": "កំហុស",
+    "success": "ជោគជ័យ",
+    "retry": "ព្យាយាមម្តងទៀត",
+    "welcome": "ស្វាគមន៍មកកាន់ Sabay Shop",
+    "get_started": "ចាប់ផ្តើម",
+    "guest_message": "ចូលរួមជាមួយសហគមន៍របស់យើង ដើម្បីចាប់ផ្តើមលក់ និងទិញផលិតផលនៅថ្ងៃនេះ!"
+  },
+  "auth": {
+    "sign_in_to_continue": "ចូលគណនីដើម្បីបន្ត",
+    "email": "អ៊ីមែល",
+    "password": "ពាក្យសម្ងាត់",
+    "forgot_password": "ភ្លេចពាក្យសម្ងាត់?",
+    "dont_have_account": "មិនទាន់មានគណនី?",
+    "already_have_account": "មានគណនីរួចហើយ?",
+    "create_account": "បង្កើតគណនី"
+  },
+  "profile": {
+    "my_ads": "ការផ្សាយរបស់ខ្ញុំ",
+    "followers": "អ្នកតាមដាន",
+    "following": "កំពុងតាមដាន",
+    "favorites": "ចំណូលចិត្ត",
+    "dashboard": "ផ្ទាំងគ្រប់គ្រង",
+    "edit_profile": "កែសម្រួលព័ត៌មាន",
+    "notifications": "ការជូនដំណឹង",
+    "security": "សុវត្ថិភាព និងឯកជនភាព",
+    "help": "ជំនួយ និងការគាំទ្រ",
+    "logout_confirm": "តើអ្នកប្រាកដជាចង់ចាកចេញមែនទេ?",
+    "since": "តាំងពី",
+    "verified": "បានបញ្ជាក់"
+  },
+  "products": {
+    "recent_ads": "ការផ្សាយថ្មីៗ",
+    "browse_by_category": "ស្វែងរកតាមប្រភេទ",
+    "no_items_found": "រកមិនឃើញទំនិញទេ។",
+    "specifications": "លក្ខណៈបច្ចេកទេស",
+    "description": "ការពិពណ៌នា",
+    "location": "ទីតាំង",
+    "contact_seller": "ទំនាក់ទំនងអ្នកលក់",
+    "chat_with_seller": "ឆាតជាមួយអ្នកលក់",
+    "view_store": "មើលហាង",
+    "follow_store": "តាមដានហាង",
+    "view_on_map": "មើលលើផែនទី",
+    "call_now": "ហៅចេញ"
+  },
+  "validation": {
+    "required": "ព័ត៌មាននេះត្រូវបានទាមទារ",
+    "email_invalid": "អាសយដ្ឋានអ៊ីមែលមិនត្រឹមត្រូវ",
+    "password_short": "ពាក្យសម្ងាត់ត្រូវមានយ៉ាងហោចណាស់ ៦ តួអក្សរ"
+  }
 }

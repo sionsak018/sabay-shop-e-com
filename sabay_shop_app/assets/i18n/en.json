@@ -1,3 +1,67 @@
 {
-  "app_name": "Sabay Shop"
+  "app_name": "Sabay Shop",
+  "common": {
+    "home": "Home",
+    "marketplace": "Marketplace",
+    "sell": "Sell",
+    "messages": "Messages",
+    "profile": "Profile",
+    "login": "Login",
+    "register": "Register",
+    "logout": "Logout",
+    "cancel": "Cancel",
+    "save": "Save",
+    "edit": "Edit",
+    "delete": "Delete",
+    "search": "Search",
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "retry": "Retry",
+    "welcome": "Welcome to Sabay Shop",
+    "get_started": "GET STARTED",
+    "guest_message": "Join our community to start selling and buying products today!"
+  },
+  "auth": {
+    "sign_in_to_continue": "Sign in to continue",
+    "email": "Email",
+    "password": "Password",
+    "forgot_password": "Forgot Password?",
+    "dont_have_account": "Don't have an account?",
+    "already_have_account": "Already have an account?",
+    "create_account": "Create Account"
+  },
+  "profile": {
+    "my_ads": "MY ADS",
+    "followers": "FOLLOWERS",
+    "following": "FOLLOWING",
+    "favorites": "FAVORITES",
+    "dashboard": "DASHBOARD",
+    "edit_profile": "Edit Profile",
+    "notifications": "Notifications",
+    "security": "Security & Privacy",
+    "help": "Help & Support",
+    "logout_confirm": "Are you sure you want to logout?",
+    "since": "SINCE",
+    "verified": "VERIFIED"
+  },
+  "products": {
+    "recent_ads": "RECENT ADS",
+    "browse_by_category": "BROWSE BY CATEGORY",
+    "no_items_found": "No items found.",
+    "specifications": "SPECIFICATIONS",
+    "description": "DESCRIPTION",
+    "location": "LOCATION",
+    "contact_seller": "CONTACT SELLER",
+    "chat_with_seller": "CHAT WITH SELLER",
+    "view_store": "VIEW STORE",
+    "follow_store": "FOLLOW STORE",
+    "view_on_map": "VIEW ON MAP",
+    "call_now": "CALL NOW"
+  },
+  "validation": {
+    "required": "This field is required",
+    "email_invalid": "Invalid email address",
+    "password_short": "Password must be at least 6 characters"
+  }
 }

@@ -17,6 +17,7 @@ class UserEntity extends Equatable {
   final int postLimit;
   final String? location;
   final DateTime? createdAt;
+  final List<String> permissions;
 
   const UserEntity({
     required this.id,
@@ -35,7 +36,12 @@ class UserEntity extends Equatable {
     this.postLimit = 0,
     this.location,
     this.createdAt,
+    this.permissions = const [],
   });
+
+  bool hasPermission(String permission) {
+    return role == 'admin' || permissions.contains(permission);
+  }
 
   @override
   List<Object?> get props => [
@@ -51,6 +57,7 @@ class UserEntity extends Equatable {
         adsCount,
         postLimit,
         location,
-        createdAt
+        createdAt,
+        permissions,
       ];
 }

@@ -18,6 +18,7 @@ class UserModel extends UserEntity {
     super.postLimit,
     super.location,
     super.createdAt,
+    super.permissions,
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
@@ -38,6 +39,7 @@ class UserModel extends UserEntity {
       postLimit: json['post_limit'] is int ? json['post_limit'] : (int.tryParse(json['post_limit']?.toString() ?? '') ?? 0),
       location: _buildLocationString(json),
       createdAt: json['created_at'] != null ? DateTime.parse(json['created_at']) : null,
+      permissions: (json['permissions'] as List?)?.map((p) => p.toString()).toList() ?? [],
     );
   }
 
@@ -62,6 +64,7 @@ class UserModel extends UserEntity {
       'about_me': aboutMe,
       'role': role,
       'account_type': accountType,
+      'permissions': permissions,
     };
   }
 }

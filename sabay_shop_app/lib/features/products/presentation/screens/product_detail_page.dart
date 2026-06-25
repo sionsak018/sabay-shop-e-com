@@ -60,11 +60,12 @@ class _ProductDetailPageState extends ConsumerState<ProductDetailPage> {
 
   bool _checkAuth() {
     final authState = ref.read(authControllerProvider);
-    if (authState.value == null && !authState.isLoading) {
+    if (authState.value != null) return true;
+    
+    if (!authState.isLoading) {
       context.push(RouteName.login);
-      return false;
     }
-    return true;
+    return false;
   }
 
   @override

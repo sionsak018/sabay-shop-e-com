@@ -300,7 +300,9 @@ class _PublicProfilePageState extends ConsumerState<PublicProfilePage> with Sing
                   child: ElevatedButton(
                     onPressed: () {
                        final authState = ref.read(authControllerProvider);
-                       if (authState.value == null && !authState.isLoading) {
+                       if (authState.isLoading) return;
+                       
+                       if (authState.value == null) {
                          context.push(RouteName.login);
                          return;
                        }
@@ -335,7 +337,9 @@ class _PublicProfilePageState extends ConsumerState<PublicProfilePage> with Sing
                     icon: const Icon(Icons.chat_bubble_outline, color: Color(0xFF4B5563), size: 20),
                     onPressed: () {
                       final authState = ref.read(authControllerProvider);
-                      if (authState.value == null && !authState.isLoading) {
+                      if (authState.isLoading) return;
+
+                      if (authState.value == null) {
                         context.push(RouteName.login);
                         return;
                       }
@@ -446,7 +450,9 @@ class _StoreHomeTab extends ConsumerWidget {
               onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ProductDetailPage(product: filteredProducts[index]))),
               onFavoriteTap: () {
                 final authState = ref.read(authControllerProvider);
-                if (authState.value == null && !authState.isLoading) {
+                if (authState.isLoading) return;
+
+                if (authState.value == null) {
                   context.push(RouteName.login);
                 } else {
                   ref.read(productListControllerProvider(userId: userId.toString()).notifier)

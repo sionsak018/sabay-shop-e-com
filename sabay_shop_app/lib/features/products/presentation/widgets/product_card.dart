@@ -128,6 +128,7 @@ class ProductCard extends StatelessWidget {
                     right: 8,
                     child: GestureDetector(
                       onTap: onFavoriteTap,
+                      behavior: HitTestBehavior.opaque,
                       child: Container(
                         padding: const EdgeInsets.all(6),
                         decoration: BoxDecoration(

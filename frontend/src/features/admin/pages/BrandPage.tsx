@@ -4,8 +4,10 @@ import { categoryApi } from '../../categories/services/categoryApi';
 import { type Category } from '../../categories/types/category.types';
 import { getImageUrl } from '../../../utils/imageUrl';
 import { useAlert } from '../../../context/AlertContext';
+import { useTranslation } from 'react-i18next';
 
 export const BrandPage = () => {
+  const { t } = useTranslation();
   const { showAlert } = useAlert();
   const [brands, setBrands] = useState<Brand[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -45,7 +47,7 @@ export const BrandPage = () => {
         slug: brand.slug,
         category_id: String(brand.category_id || '')
       });
-      setImagePreview(brand.image_url ? `http://127.0.0.1:8000/storage/${brand.image_url}` : null);
+      setImagePreview(brand.image_url ? getImageUrl(brand.image_url) : null);
     } else {
       setEditingBrand(null);
       setFormData({ name: '', slug: '', category_id: '' });
@@ -66,7 +68,7 @@ export const BrandPage = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const newErrors: Record<string, string> = {};
-    const Msg = 'ព័ត៌មាននេះត្រូវបានទាមទារ';
+    const Msg = t('validation.required');
 
     if (!formData.name.trim()) newErrors.name = Msg;
     if (!formData.slug.trim()) newErrors.slug = Msg;
@@ -140,7 +142,7 @@ export const BrandPage = () => {
                 <td className="px-6 py-4">
                   <div className="w-10 h-10 rounded bg-gray-100 dark:bg-gray-800 overflow-hidden">
                     {brand.image_url ? (
-                      <img src={`http://127.0.0.1:8000/storage/${brand.image_url}`} className="w-full h-full object-cover" />
+                      <img src={getImageUrl(brand.image_url)} className="w-full h-full object-cover" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-gray-400 dark:text-gray-600 text-[10px]">No img</div>
                     )}
